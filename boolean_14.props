@@ -1,0 +1,8 @@
+# create a MDI type for boolean values
+
+name="boolean_14"
+description="Boolean (true/false) values"
+type=Regex
+regex='^(?:[Tt][Rr][Uu][Ee]|[Ff][Aa][Ll][Ss][Ee])$'
+isSensitive=false
+isRequired=false

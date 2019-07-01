@@ -1,0 +1,8 @@
+# create a MDI type for ports between 1024 and 9999
+
+name="port_14"
+description="Port numbers in the range between 1024 and 9999"
+type=Regex
+regex='^([2-9]\d{3}|1[1-9]\d\d|10[3-9]\d|102[4-9])$'
+isSensitive=false
+isRequired=false
