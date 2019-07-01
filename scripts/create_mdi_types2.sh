@@ -124,12 +124,12 @@ set -o errexit # exit after first line that fails
 set -o nounset # exit when script tries to use undeclared variables
 
 # load sweagle host specific variables like aToken, sweagleURL, ...
-source "sweagle.env"
+source $(dirname "$0")/sweagle.env
 
 # create a new model changeset
 modelcs=$(create_modelchangeset 'Create MDI Type' "Create a new MDI type at $(date +'%c')")
 
-for file in ./mdi/*.props; do
+for file in "$1/*.props"; do
 	source "$file"
 	create_mdi_type $modelcs "$name" "$description" $type $isRequired $isSensitive ${regex}
 done
