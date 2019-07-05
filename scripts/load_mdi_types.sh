@@ -23,7 +23,7 @@
 # set -n   # Uncomment to check script syntax, without execution.
 #          # NOTE: Do not forget to put the # comment back in or
 #          #       the shell script will never execute!
-set -x   # Uncomment to debug this shell script
+#set -x   # Uncomment to debug this shell script
 #
 ##########################################################
 #               FILES AND VARIABLES
@@ -67,8 +67,27 @@ function create_modelchangeset() {
     # check http return code
 	get_httpreturn httpcode res; if [ ${httpcode} -ne "200" ]; then exit 1; fi;
 
-    cs=$(echo ${res} | jq '.properties.changeset.id')
+  cs=$(echo ${res} | jq '.properties.changeset.id')
 	echo ${cs}
+}
+
+# arg1: name
+function get_mdi_type() {
+	name=${1}
+
+	# Get a new mdi_type based on its name
+	#echo "curl $sweagleURL/api/v1/model/mdiType?name=$name --request GET --header 'authorization: bearer $aToken'  --header 'Accept: application/vnd.siren+json'"
+	res=$(\
+	  curl -sw "%{http_code}" "$sweagleURL/api/v1/model/mdiType?name=$name" --request GET --header "authorization: bearer $aToken"  --header 'Accept: application/vnd.siren+json' \
+		)
+
+	# check curl exit code
+	rc=$?; if [ "${rc}" -ne "0" ]; then exit ${rc}; fi;
+    # check http return code
+	get_httpreturn httpcode res; if [ ${httpcode} -ne "200" ]; then exit 1; fi;
+
+	id=$(echo ${res} | jq '.entities[].properties.id')
+	echo ${id}
 }
 
 
@@ -88,9 +107,44 @@ function create_mdi_type() {
 	sensitive=${6:-false}
 	regex=${7:-}
 
-	# Create and open a new changeset
+	# Create a new mdi_type
 	res=$(\
 		curl -sw "%{http_code}" "$sweagleURL/api/v1/model/mdiType" --request POST --header "authorization: bearer $aToken"  --header 'Accept: application/vnd.siren+json' \
+		--data "changeset=${changeset}" \
+		--data-urlencode "name=${name}" \
+		--data "required=${required}" \
+		--data-urlencode "valueType=${value_type}" \
+		--data "sensitive=${sensitive}" \
+		--data-urlencode "regex=${regex}" \
+		--data-urlencode "description=${description}")
+	# check curl exit code
+	rc=$?; if [ "${rc}" -ne "0" ]; then exit ${rc}; fi;
+    # check http return code
+	get_httpreturn httpcode res; if [ ${httpcode} -ne "200" ]; then exit 1; fi;
+
+}
+
+# arg1: changeset ID
+# arg2: MDI type ID
+# arg3: name
+# arg4: description
+# arg5: value_type
+# arg6: required
+# arg7: sensitive
+# arg8: regex
+function update_mdi_type() {
+	changeset=${1}
+	id=${2}
+	name=${3}
+	description=${4:-}
+	value_type=${5:-Text}
+	required=${6:-false}
+	sensitive=${7:-false}
+	regex=${8:-}
+
+	# Update an existing mdi_type
+	res=$(\
+		curl -sw "%{http_code}" "$sweagleURL/api/v1/model/mdiType/$id" --request POST --header "authorization: bearer $aToken"  --header 'Accept: application/vnd.siren+json' \
 		--data "changeset=${changeset}" \
 		--data-urlencode "name=${name}" \
 		--data "required=${required}" \
@@ -126,12 +180,26 @@ set -o nounset # exit when script tries to use undeclared variables
 # load sweagle host specific variables like aToken, sweagleURL, ...
 source $(dirname "$0")/sweagle.env
 
+if [ "$#" -lt "1" ]; then
+    echo "********** ERROR: NOT ENOUGH ARGUMENTS SUPPLIED"
+    echo "********** YOU SHOULD PROVIDE 1- DIRECTORY WHERE YOUR TYPES ARE STORED"
+    exit 1
+fi
+
 # create a new model changeset
 modelcs=$(create_modelchangeset 'Create MDI Type' "Create a new MDI type at $(date +'%c')")
 
-for file in "$1/*.props"; do
+for file in $1/*.props; do
+	echo "Parsing file $file"
 	source "$file"
-	create_mdi_type $modelcs "$name" "$description" $type $isRequired $isSensitive ${regex}
+	type_id=$(get_mdi_type "$name")
+	if [ -z "$type_id" ]; then
+		echo "*** No existing MDI type $name, create it"
+		create_mdi_type $modelcs "$name" "$description" $type $isRequired $isSensitive ${regex}
+	else
+		echo "*** MDI type $name already exits with id $type_id, update it"
+		update_mdi_type $modelcs "$type_id" "$name" "$description" $type $isRequired $isSensitive ${regex}
+	fi
 done
 
 # approve
