@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 #
-# SCRIPT: create_mdi_types.sh
-# AUTHOR: filip@sweagle>com
-# DATE:   25 April 2019
-# REV:    1.1.D (Valid are A, B, D, T, Q, and P)
+# SCRIPT: load_mdi_types.sh
+# AUTHOR: dimitris@sweagle.com, filip@sweagle.com
+# DATE:   July 2019
+# REV:    2.0.D (Valid are A, B, D, T, Q, and P)
 #               (For Alpha, Beta, Dev, Test, QA, and Production)
 #
 # PLATFORM: Not platform dependent
@@ -12,7 +12,7 @@
 #               (see: https://stedolan.github.io/jq/)
 #				- tested in bash 4.4 on Mac OS X
 #
-# PURPOSE:	Define MDI types with regular expressions.
+# PURPOSE:	Load MDI types stored as properties files, and located in directory provided as input
 #
 # REV LIST:
 #        DATE: DATE_of_REVISION
@@ -75,7 +75,7 @@ function create_modelchangeset() {
 function get_mdi_type() {
 	name=${1}
 
-	# Get a new mdi_type based on its name
+	# Get a mdi_type based on its name
 	#echo "curl $sweagleURL/api/v1/model/mdiType?name=$name --request GET --header 'authorization: bearer $aToken'  --header 'Accept: application/vnd.siren+json'"
 	res=$(\
 	  curl -sw "%{http_code}" "$sweagleURL/api/v1/model/mdiType?name=$name" --request GET --header "authorization: bearer $aToken"  --header 'Accept: application/vnd.siren+json' \
