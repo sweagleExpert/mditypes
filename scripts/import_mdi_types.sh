@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# SCRIPT: load_mdi_types.sh
+# SCRIPT: import_mdi_types.sh
 # AUTHOR: dimitris@sweagle.com, filip@sweagle.com
 # DATE:   July 2019
 # REV:    2.0.D (Valid are A, B, D, T, Q, and P)
@@ -12,7 +12,8 @@
 #               (see: https://stedolan.github.io/jq/)
 #				- tested in bash 4.4 on Mac OS X
 #
-# PURPOSE:	Load MDI types stored as properties files, and located in directory provided as input
+# PURPOSE:	Import MDI types, stored as properties files, into a SWEAGLE tenantand
+#						Directory where properties files are located must be provided as input
 #
 # REV LIST:
 #        DATE: DATE_of_REVISION
