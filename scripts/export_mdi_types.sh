@@ -3,7 +3,7 @@
 # SCRIPT: export_mdi_types.sh
 # AUTHOR: dimitris@sweagle.com, filip@sweagle.com
 # DATE:   August 2019
-# REV:    1.0.A (Valid are A, B, D, T, Q, and P)
+# REV:    1.0.Q (Valid are A, B, D, T, Q, and P)
 #               (For Alpha, Beta, Dev, Test, QA, and Production)
 #
 # PLATFORM: Not platform dependent
