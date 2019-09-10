@@ -1,0 +1,6 @@
+name="kubernetes-kind"
+description="Kubernetes list of authorised kinds"
+type=List
+regex="null"
+isSensitive=false
+isRequired=true
