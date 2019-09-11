@@ -1,0 +1,8 @@
+# create a MDI type for linux absolute path
+
+name="linux_path"
+description="linux absolute path regex"
+type=Regex
+regex='^(/[^/ ]*)+/?$'
+isSensitive=false
+isRequired=false

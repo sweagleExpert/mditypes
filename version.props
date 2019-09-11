@@ -1,0 +1,8 @@
+# create a MDI type for version
+
+name="version"
+description="version in format x.y.z regex"
+type=Regex
+regex='^(\d+\.)?(\d+\.)?(\d+)$'
+isSensitive=false
+isRequired=false
