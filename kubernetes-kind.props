@@ -4,4 +4,4 @@ type=List
 regex="null"
 isSensitive=false
 isRequired=true
-listOfValues=["DaemonSet","Deployment","Ingress","Job","NetworkPolicy","PersistentVolume","PersistentVolumeClaim","Pod","ReplicaSet","ReplicationController","Secret","Service","StatefulSet","StorageClass"]
+listOfValues=DaemonSet,Deployment,Ingress,Job,NetworkPolicy,PersistentVolume,PersistentVolumeClaim,Pod,ReplicaSet,ReplicationController,Secret,Service,StatefulSet,StorageClass
