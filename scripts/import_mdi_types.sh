@@ -124,6 +124,7 @@ function get_mdi_type() {
 # arg5: required
 # arg6: sensitive
 # arg7: regex
+# arg8: listOfValues
 function create_mdi_type() {
 	changeset=${1}
 	name=${2}
@@ -132,6 +133,7 @@ function create_mdi_type() {
 	required=${5:-false}
 	sensitive=${6:-false}
 	regex=${7:-}
+	listOfValues=${8:-}
 
 	# Create a new mdi_type
 	res=$(\
@@ -142,10 +144,12 @@ function create_mdi_type() {
 		--data-urlencode "valueType=${value_type}" \
 		--data "sensitive=${sensitive}" \
 		--data-urlencode "regex=${regex}" \
+		--data-urlencode "listOfValues=${listOfValues}" \
 		--data-urlencode "description=${description}")
+
 	# check curl exit code
 	rc=$?; if [ "${rc}" -ne "0" ]; then exit ${rc}; fi;
-    # check http return code
+  # check http return code
 	get_httpreturn httpcode res; if [ ${httpcode} -ne "200" ]; then echo ${res}; exit 1; fi;
 }
 
@@ -157,6 +161,7 @@ function create_mdi_type() {
 # arg6: required
 # arg7: sensitive
 # arg8: regex
+# arg9: listOfValues
 function update_mdi_type() {
 	changeset=${1}
 	id=${2}
@@ -166,6 +171,7 @@ function update_mdi_type() {
 	required=${6:-false}
 	sensitive=${7:-false}
 	regex=${8:-}
+	listOfValues=${9:-}
 
 	# Update an existing mdi_type
 	res=$(\
@@ -176,10 +182,12 @@ function update_mdi_type() {
 		--data-urlencode "valueType=${value_type}" \
 		--data "sensitive=${sensitive}" \
 		--data-urlencode "regex=${regex}" \
+		--data-urlencode "listOfValues=${listOfValues}" \
 		--data-urlencode "description=${description}")
+
 	# check curl exit code
 	rc=$?; if [ "${rc}" -ne "0" ]; then exit ${rc}; fi;
-    # check http return code
+	# check http return code
 	get_httpreturn httpcode res; if [ ${httpcode} -ne "200" ]; then echo ${res}; exit 1; fi;
 }
 
@@ -211,14 +219,15 @@ fi
 
 for file in ${argSource}; do
 	echo "Parsing file ${file}"
+	listOfValues=""
 	source "${file}"
 	type_id=$(get_mdi_type "${name}")
 	if [ -z "${type_id}" ]; then
 		echo "### No existing MDI type ${name}, create it"
-		res=$(create_mdi_type ${modelcs} "${name}" "${description}" $type $isRequired $isSensitive ${regex})
+		res=$(create_mdi_type ${modelcs} "${name}" "${description}" $type $isRequired $isSensitive "${regex}" "${listOfValues}")
 	else
 		echo "### MDI type ${name} already exits with id ${type_id}, update it"
-		res=$(update_mdi_type ${modelcs} "${type_id}" "${name}" "${description}" $type $isRequired $isSensitive ${regex})
+		res=$(update_mdi_type ${modelcs} "${type_id}" "${name}" "${description}" $type $isRequired $isSensitive "${regex}" "${listOfValues}")
 	fi
 	rc=$?; if [[ "${rc}" -ne 0 ]]; then echo "API CALL FAILED WITH ERROR: $res"; error_found=true; else echo "API CALL SUCCESSFULL";  fi
 done
