@@ -27,12 +27,38 @@
 # set -x   # Uncomment to debug this shell script
 #
 ##########################################################
+#               CHECK PREREQUISITES
+##########################################################
+if ! [ -x "$(command -v jq)" ] ; then
+  echo "#########################################################################################"
+  echo "########## ERROR: JQ is required for this script to work"
+  echo "#########################################################################################"
+	exit 1
+fi
+
+##########################################################
 #               FILES AND VARIABLES
 ##########################################################
-
 # command line arguments
 this_script=$(basename $0)
 host=${1:-}
+
+# load sweagle host specific variables like aToken, sweagleURL, ...
+source $(dirname "$0")/sweagle.env
+
+# Check input arguments
+if [ "$#" -lt "1" ]; then
+	echo "*** No target directory provided, will use (.) as output"
+	TARGET_DIR="."
+else
+	if [ -d "$1" ]; then
+		TARGET_DIR="$1"
+	else
+		echo "********** ERROR: ($1) IS NOT A DIRECTORY"
+    echo "********** YOU SHOULD PROVIDE TARGET DIRECTORY WHERE YOUR TYPES WILL BE STORED"
+    exit 1
+	fi
+fi
 
 ##########################################################
 #                    FUNCTIONS
@@ -71,31 +97,13 @@ function get_all_mdi_types() {
 ##########################################################
 #               BEGINNING OF MAIN
 ##########################################################
-
 set -o errexit # exit after first line that fails
 set -o nounset # exit when script tries to use undeclared variables
 
-# load sweagle host specific variables like aToken, sweagleURL, ...
-source $(dirname "$0")/sweagle.env
-
-# Check input arguments
-if [ "$#" -lt "1" ]; then
-	echo "*** No target directory provided, will use (.) as output"
-	TARGET_DIR="."
-else
-	if [ -d "$1" ]; then
-		TARGET_DIR="$1"
-	else
-		echo "********** ERROR: ($1) IS NOT A DIRECTORY"
-    echo "********** YOU SHOULD PROVIDE TARGET DIRECTORY WHERE YOUR TYPES WILL BE STORED"
-    exit 1
-	fi
-fi
-
-echo "*** Getting all mdi types from SWEAGLE tenant $sweagleURL"
+echo "### Getting all mdi types from SWEAGLE tenant $sweagleURL"
 mdi_types=$(get_all_mdi_types)
 
-echo "*** Filter only on valid MDI Types"
+echo "#### Filter only on valid MDI Types"
 mdi_types=$(echo ${mdi_types} | jq '.entities[].properties.version | select(.status=="VALID")')
 mdi_types=${mdi_types//"}
 {"/"},{"}

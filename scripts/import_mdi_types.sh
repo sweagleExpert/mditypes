@@ -27,12 +27,37 @@
 #set -x   # Uncomment to debug this shell script
 #
 ##########################################################
+#               CHECK PREREQUISITES
+##########################################################
+if ! [ -x "$(command -v jq)" ] ; then
+  echo "#########################################################################################"
+  echo "########## ERROR: JQ is required for this script to work"
+  echo "#########################################################################################"
+	exit 1
+fi
+
+if [ $# -lt 1 ]; then
+	echo "********** ERROR: NOT ENOUGH ARGUMENTS SUPPLIED"
+	echo "********** YOU SHOULD PROVIDE 1- DIRECTORY OR FILE OF YOUR TYPE(S)"
+	exit 1
+elif [ ! -d "$1" ] && [ ! -f "$1" ]; then
+	echo "********** ERROR: ($1) IS NOT A DIRECTORY OR FILE"
+	echo "********** YOU SHOULD PROVIDE 1- DIRECTORY OR FILE OF YOUR TYPE(S)"
+  exit 1
+fi
+
+##########################################################
 #               FILES AND VARIABLES
 ##########################################################
-
 # command line arguments
 this_script=$(basename $0)
 host=${1:-}
+
+# load sweagle host specific variables like aToken, sweagleURL, ...
+source $(dirname "$0")/sweagle.env
+
+# Set boolean in case of error to False
+error_found=false
 
 ##########################################################
 #                    FUNCTIONS
@@ -121,8 +146,7 @@ function create_mdi_type() {
 	# check curl exit code
 	rc=$?; if [ "${rc}" -ne "0" ]; then exit ${rc}; fi;
     # check http return code
-	get_httpreturn httpcode res; if [ ${httpcode} -ne "200" ]; then exit 1; fi;
-
+	get_httpreturn httpcode res; if [ ${httpcode} -ne "200" ]; then echo ${res}; exit 1; fi;
 }
 
 # arg1: changeset ID
@@ -156,8 +180,7 @@ function update_mdi_type() {
 	# check curl exit code
 	rc=$?; if [ "${rc}" -ne "0" ]; then exit ${rc}; fi;
     # check http return code
-	get_httpreturn httpcode res; if [ ${httpcode} -ne "200" ]; then exit 1; fi;
-
+	get_httpreturn httpcode res; if [ ${httpcode} -ne "200" ]; then echo ${res}; exit 1; fi;
 }
 
 # arg1: changeset ID
@@ -174,39 +197,40 @@ function approve_model_changeset() {
 ##########################################################
 #               BEGINNING OF MAIN
 ##########################################################
-
-set -o errexit # exit after first line that fails
+#set -o errexit # exit after first line that fails
 set -o nounset # exit when script tries to use undeclared variables
 
-# load sweagle host specific variables like aToken, sweagleURL, ...
-source $(dirname "$0")/sweagle.env
-
-if [ "$#" -lt "1" ]; then
-    echo "********** ERROR: NOT ENOUGH ARGUMENTS SUPPLIED"
-    echo "********** YOU SHOULD PROVIDE 1- DIRECTORY WHERE YOUR TYPES ARE STORED"
-    exit 1
-fi
-
-# create a new model changeset
+echo "### Create a new model changeset"
 modelcs=$(create_modelchangeset 'Create MDI Type' "Create a new MDI type at $(date +'%c')")
 
-for file in $1/*.props; do
-	echo "Parsing file $file"
-	source "$file"
-	type_id=$(get_mdi_type "$name")
-	if [ -z "$type_id" ]; then
-		echo "*** No existing MDI type $name, create it"
-		create_mdi_type $modelcs "$name" "$description" $type $isRequired $isSensitive ${regex}
+if [ -f "$1" ]; then
+	argSource="$1"
+else
+	argSource="$1/*.props"
+fi
+
+for file in ${argSource}; do
+	echo "Parsing file ${file}"
+	source "${file}"
+	type_id=$(get_mdi_type "${name}")
+	if [ -z "${type_id}" ]; then
+		echo "### No existing MDI type ${name}, create it"
+		res=$(create_mdi_type ${modelcs} "${name}" "${description}" $type $isRequired $isSensitive ${regex})
 	else
-		echo "*** MDI type $name already exits with id $type_id, update it"
-		update_mdi_type $modelcs "$type_id" "$name" "$description" $type $isRequired $isSensitive ${regex}
+		echo "### MDI type ${name} already exits with id ${type_id}, update it"
+		res=$(update_mdi_type ${modelcs} "${type_id}" "${name}" "${description}" $type $isRequired $isSensitive ${regex})
 	fi
+	rc=$?; if [[ "${rc}" -ne 0 ]]; then echo "API CALL FAILED WITH ERROR: $res"; error_found=true; else echo "API CALL SUCCESSFULL";  fi
 done
 
-# approve
-approve_model_changeset ${modelcs}
-rc=$?; if [[ "${rc}" -ne 0 ]]; then echo "Model changeset approval failed"; exit ${rc}; fi
+if $error_found ; then
+	echo "### ERROR: At least one error, please check model changeset to approve or delete it"
+	exit 1
+else
+	echo "### Approve model changeset"
+	approve_model_changeset ${modelcs}
+	rc=$?; if [[ "${rc}" -ne 0 ]]; then echo "Model changeset approval failed"; exit ${rc}; fi
+fi
 
 exit 0
-
 # End of script
