@@ -64,20 +64,6 @@ fi
 #                    FUNCTIONS
 ##########################################################
 
-# arg1: http result (incl. http code)
-# arg2: httpcode (by reference)
-function get_httpreturn() {
-	local -n __http=${1}
-	local -n __res=${2}
-
-	__http="${__res:${#__res}-3}"
-    if [ ${#__res} -eq 3 ]; then
-      __res=""
-    else
-      __res="${__res:0:${#__res}-3}"
-    fi
-}
-
 function get_all_mdi_types() {
 	# Get all mdi_types
 	#echo "curl $sweagleURL/api/v1/model/mdiType?name=$name --request GET --header 'authorization: bearer $aToken'  --header 'Accept: application/vnd.siren+json'"
