@@ -3,7 +3,7 @@
 # SCRIPT: export_mdi_types.sh
 # AUTHOR: dimitris@sweagle.com, filip@sweagle.com
 # DATE:   August 2019
-# REV:    1.0.Q (Valid are A, B, D, T, Q, and P)
+# REV:    1.1.T (Valid are A, B, D, T, Q, and P)
 #               (For Alpha, Beta, Dev, Test, QA, and Production)
 #
 # PLATFORM: Not platform dependent
@@ -66,15 +66,25 @@ fi
 
 function get_all_mdi_types() {
 	# Get all mdi_types
-	#echo "curl $sweagleURL/api/v1/model/mdiType?name=$name --request GET --header 'authorization: bearer $aToken'  --header 'Accept: application/vnd.siren+json'"
-	res=$(\
-	  curl -sw "%{http_code}" "$sweagleURL/api/v1/model/mdiType" --request GET --header "authorization: bearer $aToken"  --header 'Accept: application/vnd.siren+json' \
-		)
-
+	res=$(curl -sw "%{http_code}" "$sweagleURL/api/v1/model/mdiType" --request GET --header "authorization: bearer $aToken"  --header 'Accept: application/vnd.siren+json')
 	# check curl exit code
 	rc=$?; if [ "${rc}" -ne "0" ]; then exit ${rc}; fi;
     # check http return code
-	get_httpreturn httpcode res; if [ ${httpcode} -ne "200" ]; then exit 1; fi;
+	get_httpreturn httpcode res; if [ ${httpcode} -ne "200" ]; then ${res};  exit 1; fi;
+
+	echo ${res}
+}
+
+# arg1: id
+function get_mdi_type() {
+  id=${1}
+
+	# Get one mdi_type based on its id
+	res=$(curl -sw "%{http_code}" "$sweagleURL/api/v1/model/mdiType/$id" --request GET --header "authorization: bearer $aToken"  --header 'Accept: application/vnd.siren+json')
+	# check curl exit code
+	rc=$?; if [ "${rc}" -ne "0" ]; then exit ${rc}; fi;
+    # check http return code
+	get_httpreturn httpcode res; if [ ${httpcode} -ne "200" ]; then echo ${res}; exit 1; fi;
 
 	echo ${res}
 }
@@ -100,12 +110,18 @@ for row in $(echo "[${mdi_types}]" | jq -r '.[] | @base64'); do
      echo ${row} | base64 --decode | jq -r ${1}
     }
 	filename="$TARGET_DIR/$(_jq '.name').props"
-  echo "name=\"$(_jq '.name')\""  >> $filename
+  echo "name=\"$(_jq '.name')\""  > $filename
 	echo "description=\"$(_jq '.description')\""  >> $filename
 	echo "type=$(_jq '.valueType')"  >> $filename
 	echo "regex=\"$(_jq '.regex')\""  >> $filename
 	echo "isSensitive=$(_jq '.sensitive')"  >> $filename
 	echo "isRequired=$(_jq '.required')"  >> $filename
+  if [ "$(_jq '.valueType')" == "List" ]; then
+    id=$(_jq '.masterId')
+    mdi_type=$(get_mdi_type $id)
+    list=$(echo ${mdi_type} | jq -r '.properties.listOfValues | map(.value) | join(",")')
+    echo "listOfValues=$list" >> $filename
+  fi
 done
 
 exit 0
