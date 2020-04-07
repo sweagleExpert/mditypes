@@ -1,0 +1,6 @@
+name="multi"
+description="Multiline parameter"
+type=MULTILINE
+regex="null"
+isSensitive=false
+isRequired=false
